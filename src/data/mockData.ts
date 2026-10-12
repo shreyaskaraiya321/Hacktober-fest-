@@ -9,6 +9,8 @@ import {
   PullRequest,
   AIDiagnosticReport,
 } from '../types/dashboard';
+import type { CommitItem } from '../types';
+import type { ActivityDay } from '../components/ui/activity-heatmap';
 
 export const mockEngines: ModelEngine[] = [
   {
@@ -671,3 +673,179 @@ pub fn allocate_block(&self, seq_id: u64) -> Result<BlockId, AllocError> {
     },
   ],
 };
+
+export const mockCommits: CommitItem[] = [
+  {
+    id: 'commit-1',
+    hash: 'a1b2c3d',
+    message: 'feat(auth): implement atomic CAS token rotation & reuse detection',
+    author: 'Sarah (Backend)',
+    authorRole: 'Backend Lead',
+    avatarInitials: 'SB',
+    date: '2026-10-12',
+    timeAgo: '2 hours ago',
+    impactStats: {
+      insertions: 84,
+      deletions: 22,
+      filesCount: 2,
+    },
+    touchedFiles: [
+      'src/auth/session.ts',
+      'src/controllers/auth.ts',
+    ],
+    aiSummary: {
+      changes: [
+        'Introduced Redis Compare-And-Swap (CAS) evaluation script to invalidate consumed refresh tokens atomically.',
+        'Attached strict single-use validation checks to eliminate double-spend concurrency windows.',
+      ],
+      risks: [
+        'Slight Redis command round-trip latency overhead (~2-4ms) under peak concurrent rotation bursts.',
+        'Replay attempts by legacy non-compliant clients will now throw 401 exceptions immediately.',
+      ],
+    },
+  },
+  {
+    id: 'commit-2',
+    hash: '9f8e7d6',
+    message: 'fix(rate-limit): configure 5 req/min burst limiter for auth endpoints',
+    author: 'Alex (Lead Dev)',
+    authorRole: 'Tech Lead',
+    avatarInitials: 'AL',
+    date: '2026-10-12',
+    timeAgo: '4 hours ago',
+    impactStats: {
+      insertions: 46,
+      deletions: 12,
+      filesCount: 1,
+    },
+    touchedFiles: [
+      'src/middleware/rateLimiter.ts',
+    ],
+    aiSummary: {
+      changes: [
+        'Configured isolated sliding-window rate limit bucket for token exchange and refresh routes.',
+        'Standardized 429 Too Many Requests response payload and Retry-After HTTP headers.',
+      ],
+      risks: [
+        'Shared enterprise NAT/proxy IPs may experience false-positive throttle limits if unkeyed by user agent.',
+      ],
+    },
+  },
+  {
+    id: 'commit-3',
+    hash: '3c4d5e6',
+    message: 'refactor(cache): replace memory session store with pooled Redis cluster',
+    author: 'David (Infra)',
+    authorRole: 'Platform Eng',
+    avatarInitials: 'DI',
+    date: '2026-10-11',
+    timeAgo: 'yesterday',
+    impactStats: {
+      insertions: 112,
+      deletions: 89,
+      filesCount: 4,
+    },
+    touchedFiles: [
+      'src/cache/pool.ts',
+      'src/config/redis.ts',
+      'src/server.ts',
+      'src/types/cache.ts',
+    ],
+    aiSummary: {
+      changes: [
+        'Replaced localized process memory map with pooled clustered Redis connection provider.',
+        'Implemented round-robin read replicas and socket error detachment cleanup.',
+      ],
+      risks: [
+        'Network partitions between application pods and Redis master node will yield transient read fallbacks.',
+      ],
+    },
+  },
+  {
+    id: 'commit-4',
+    hash: '8b7a6c5',
+    message: 'test(auth): add concurrent multi-client race simulation test harness',
+    author: 'Marcus (QA & Sec)',
+    authorRole: 'Security Eng',
+    avatarInitials: 'MQ',
+    date: '2026-10-10',
+    timeAgo: '2 days ago',
+    impactStats: {
+      insertions: 195,
+      deletions: 14,
+      filesCount: 3,
+    },
+    touchedFiles: [
+      'tests/auth_stress.test.ts',
+      'tests/fixtures/tokens.ts',
+      'jest.config.ts',
+    ],
+    aiSummary: {
+      changes: [
+        'Constructed parallel load test dispatching 50 concurrent requests with identical refresh credentials.',
+        'Verified assertion that exactly 1 request succeeds (HTTP 200) and 49 receive 401 SecurityException.',
+      ],
+      risks: [
+        'CI pipeline duration extended by ~3.2s per test run.',
+      ],
+    },
+  },
+  {
+    id: 'commit-5',
+    hash: '5e6f7a8',
+    message: 'chore(deps): bump redis client driver and token validation library',
+    author: 'Sarah (Backend)',
+    authorRole: 'Backend Lead',
+    avatarInitials: 'SB',
+    date: '2026-10-09',
+    timeAgo: '3 days ago',
+    impactStats: {
+      insertions: 18,
+      deletions: 8,
+      filesCount: 2,
+    },
+    touchedFiles: [
+      'package.json',
+      'package-lock.json',
+    ],
+    aiSummary: {
+      changes: [
+        'Bumped ioredis to 5.3.2 to patch client memory retention issue during abnormal connection drops.',
+        'Upgraded Zod schema validator to 3.22.4.',
+      ],
+      risks: [
+        'Minimal patch update; low risk of breaking interface changes.',
+      ],
+    },
+  },
+];
+
+export function generateHeatmapDataFromCommits(commits: typeof mockCommits): ActivityDay[] {
+  // Aggregate commit counts by date 'YYYY-MM-DD'
+  const countsByDate = new Map<string, number>();
+  for (const commit of commits) {
+    if (commit.date) {
+      countsByDate.set(commit.date, (countsByDate.get(commit.date) || 0) + 1);
+    }
+  }
+
+  // 365-day array ending today (2026-10-12)
+  const result: ActivityDay[] = [];
+  const baseTime = Date.UTC(2026, 9, 12); // October 12, 2026
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+  for (let i = 364; i >= 0; i--) {
+    const dayTime = baseTime - i * ONE_DAY_MS;
+    const d = new Date(dayTime);
+    const dateStr = d.toISOString().split('T')[0];
+
+    const count = countsByDate.get(dateStr) || 0;
+
+    result.push({
+      date: dateStr,
+      count,
+    });
+  }
+
+  return result;
+}

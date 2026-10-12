@@ -368,15 +368,15 @@ export const RepoStagingDesk: React.FC<RepoStagingDeskProps> = ({
               </>
             ) : (
               <>
-                <Zap className="w-3.5 h-3.5 text-[#00FF88] fill-current" />
+                <Zap className="w-4 h-4 text-[#00FF88] fill-current" />
                 <span>
-                  {isPushed ? '⚡ PUSH TO ORIGIN (0 COMMITS)' : '⚡ PUSH TO ORIGIN (2 COMMITS)'}
+                  {isPushed ? 'PUSH TO ORIGIN (0 COMMITS)' : 'PUSH TO ORIGIN (2 COMMITS)'}
                 </span>
               </>
             )}
           </button>
 
-          {/* Outline/White Button: ↓ PULL LATEST CHANGES */}
+          {/* Outline/White Button: PULL LATEST CHANGES */}
           <button
             onClick={handlePull}
             disabled={isPushing || isPulling}
@@ -389,8 +389,8 @@ export const RepoStagingDesk: React.FC<RepoStagingDeskProps> = ({
               </>
             ) : (
               <>
-                <ArrowDown className="w-3.5 h-3.5 text-zinc-700" />
-                <span>↓ PULL LATEST CHANGES</span>
+                <ArrowDown className="w-4 h-4 text-zinc-700" />
+                <span>PULL LATEST CHANGES</span>
               </>
             )}
           </button>

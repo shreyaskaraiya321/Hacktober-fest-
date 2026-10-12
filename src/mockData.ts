@@ -3,6 +3,7 @@ import type {
   RepoOverview,
   CommitItem,
 } from './types';
+import type { ActivityDay } from './components/ui/activity-heatmap';
 
 export const mockChatMessages: ChatMessage[] = [
   {
@@ -178,6 +179,7 @@ export const mockCommits: CommitItem[] = [
     author: 'Sarah (Backend)',
     authorRole: 'Backend Lead',
     avatarInitials: 'SB',
+    date: '2026-10-12',
     timeAgo: '2 hours ago',
     impactStats: {
       insertions: 84,
@@ -206,6 +208,7 @@ export const mockCommits: CommitItem[] = [
     author: 'Alex (Lead Dev)',
     authorRole: 'Tech Lead',
     avatarInitials: 'AL',
+    date: '2026-10-12',
     timeAgo: '4 hours ago',
     impactStats: {
       insertions: 46,
@@ -232,6 +235,7 @@ export const mockCommits: CommitItem[] = [
     author: 'David (Infra)',
     authorRole: 'Platform Eng',
     avatarInitials: 'DI',
+    date: '2026-10-11',
     timeAgo: 'yesterday',
     impactStats: {
       insertions: 112,
@@ -261,6 +265,7 @@ export const mockCommits: CommitItem[] = [
     author: 'Marcus (QA & Sec)',
     authorRole: 'Security Eng',
     avatarInitials: 'MQ',
+    date: '2026-10-10',
     timeAgo: '2 days ago',
     impactStats: {
       insertions: 195,
@@ -289,6 +294,7 @@ export const mockCommits: CommitItem[] = [
     author: 'Sarah (Backend)',
     authorRole: 'Backend Lead',
     avatarInitials: 'SB',
+    date: '2026-10-09',
     timeAgo: '3 days ago',
     impactStats: {
       insertions: 18,
@@ -310,3 +316,33 @@ export const mockCommits: CommitItem[] = [
     },
   },
 ];
+
+export function generateHeatmapDataFromCommits(commits: typeof mockCommits): ActivityDay[] {
+  // Aggregate commit counts by date 'YYYY-MM-DD'
+  const countsByDate = new Map<string, number>();
+  for (const commit of commits) {
+    if (commit.date) {
+      countsByDate.set(commit.date, (countsByDate.get(commit.date) || 0) + 1);
+    }
+  }
+
+  // 365-day array ending today (2026-10-12)
+  const result: ActivityDay[] = [];
+  const baseTime = Date.UTC(2026, 9, 12); // October 12, 2026
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+  for (let i = 364; i >= 0; i--) {
+    const dayTime = baseTime - i * ONE_DAY_MS;
+    const d = new Date(dayTime);
+    const dateStr = d.toISOString().split('T')[0];
+
+    const count = countsByDate.get(dateStr) || 0;
+
+    result.push({
+      date: dateStr,
+      count,
+    });
+  }
+
+  return result;
+}

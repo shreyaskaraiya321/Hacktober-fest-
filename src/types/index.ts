@@ -51,6 +51,7 @@ export interface CommitItem {
   author: string;
   authorRole?: string;
   avatarInitials?: string;
+  date: string;
   timeAgo: string;
   impactStats: {
     insertions: number;
